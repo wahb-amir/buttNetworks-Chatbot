@@ -27,7 +27,7 @@ jobs:
           cat <<EOF > temp_readme.md
           ---
           title: Chatbot RAG Bot
-          emoji: 🤖
+          emoji: 🤖 
           colorFrom: blue
           colorTo: green
           sdk: docker
