@@ -26,7 +26,7 @@ jobs:
           # 1. Build README safely (this only happens inside the runner)
           cat <<EOF > temp_readme.md
           ---
-          title: WhatsApp RAG Bot
+          title: Chatbot RAG Bot
           emoji: 🤖
           colorFrom: blue
           colorTo: green

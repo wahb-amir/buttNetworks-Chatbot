@@ -1,17 +1,19 @@
-# WhatsApp RAG Bot
+# Website Chatbot RAG System
 
-A WhatsApp chatbot built with **FastAPI**, **Twilio**, **Supabase pgvector**, **Groq**, and **local embeddings**. The bot stores conversation history, retrieves relevant knowledge chunks with vector search, and generates grounded replies with an LLM.
+A website chatbot built with **FastAPI**, **Supabase pgvector**, **Groq**, and **local embeddings**. The system stores conversation history, retrieves relevant knowledge chunks with vector search, and generates grounded replies with an LLM.
 
 ## Features
 
-* WhatsApp webhook integration
-* FastAPI backend
-* Groq LLM response generation
-* Supabase-backed chat memory
-* pgvector retrieval for knowledge chunks
-* Local embeddings for chunking and query search
-* Retrieval test scripts for debugging and validation
-* Docker-ready project structure
+- REST API chatbot endpoint for website integration
+- FastAPI backend
+- Internal token authentication for server-to-server calls
+- Rate limiting for abuse protection
+- Groq LLM response generation
+- Supabase-backed chat memory
+- pgvector retrieval for knowledge chunks
+- Local embeddings for chunking and query search
+- Retrieval test scripts for debugging and validation
+- Docker-ready project structure
 
 ## Project Structure
 
@@ -20,7 +22,7 @@ app
 ├── api
 │   └── v1
 │       ├── routes.py
-│       └── webhook.py
+│       └── chat.py
 ├── core
 │   └── config.py
 ├── db
@@ -48,19 +50,20 @@ scripts
 
 ## How It Works
 
-1. A WhatsApp message is received through the webhook.
-2. The message is saved in chat memory.
-3. The user query is embedded with the local embedding model.
-4. Supabase pgvector retrieves the most relevant knowledge chunks.
-5. The retrieved chunks and recent chat history are passed to Groq.
-6. The model generates a grounded reply.
-7. The reply is returned to WhatsApp.
+1. The website sends a JSON message to the chatbot REST API.
+2. The request is authenticated with an internal token.
+3. The user message is saved in chat memory.
+4. The user query is embedded with the local embedding model.
+5. Supabase pgvector retrieves the most relevant knowledge chunks.
+6. The retrieved chunks and recent chat history are passed to Groq.
+7. The model generates a grounded reply.
+8. The reply is returned as JSON to the frontend.
 
 ## Main Components
 
-### `app/api/v1/webhook.py`
+### `app/api/v1/chat.py`
 
-Handles incoming WhatsApp requests, stores user messages, loads recent conversation history, runs the RAG pipeline, and returns the response.
+Handles incoming website chatbot requests, stores user messages, loads recent conversation history, runs the RAG pipeline, and returns the response as JSON.
 
 ### `app/repositories/chat_repository.py`
 
@@ -92,11 +95,11 @@ Chunks and ingests markdown content into Supabase.
 
 ### `scripts/retival_test.py`
 
-Tests retrieval quality without sending a WhatsApp message.
+Tests retrieval quality without sending a browser request.
 
 ### `scripts/test.py`
 
-Simulates a webhook request locally.
+Simulates a chatbot API request locally.
 
 ## Setup
 
@@ -123,15 +126,16 @@ APP_ENV=dev
 GROQ_API_KEY=your_groq_api_key
 GROQ_MODEL=llama-3.3-70b-versatile
 
-TWILIO_ACCOUNT_SID=your_twilio_account_sid
-TWILIO_AUTH_TOKEN=your_twilio_auth_token
-TWILIO_WHATSAPP_NUMBER=whatsapp:+14155238886
+INTERNAL_API_TOKEN=your_long_random_internal_secret
 
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 
 EMBEDDING_MODEL=BAAI/bge-small-en-v1.5
 EMBEDDING_DIM=384
+
+RATE_LIMIT_WINDOW_SECONDS=60
+RATE_LIMIT_MAX_REQUESTS=30
 ```
 
 ## Database Setup
@@ -144,9 +148,9 @@ Run the schema file in Supabase SQL editor:
 
 The database should include tables for:
 
-* `conversations`
-* `chat_messages`
-* `knowledge_chunks`
+- `conversations`
+- `chat_messages`
+- `knowledge_chunks`
 
 ## Ingest Knowledge Docs
 
@@ -158,13 +162,13 @@ python3 scripts/ingest_docs.py
 
 ## Test Retrieval
 
-To test the retrieval layer without Twilio:
+To test the retrieval layer without the frontend:
 
 ```bash
 python3 -m scripts.retival_test
 ```
 
-## Simulate a Webhook Locally
+## Simulate a Chatbot Request Locally
 
 ```bash
 python3 scripts/test.py
@@ -176,39 +180,57 @@ python3 scripts/test.py
 uvicorn app.main:app --reload
 ```
 
-## Twilio Webhook
+## API Endpoint
 
-Point your Twilio WhatsApp webhook to your exposed endpoint, for example:
+Use the chatbot endpoint from your frontend or backend:
 
 ```text
-POST /api/v1/webhook/whatsapp
+POST /api/v1/chat
 ```
 
-For local testing, use a tunnel such as ngrok.
+Example JSON body:
+
+```json
+{
+  "session_id": "web-session-123",
+  "message": "Hello, can you help me?"
+}
+```
+
+Example headers:
+
+```http
+Authorization: Bearer YOUR_INTERNAL_API_TOKEN
+Content-Type: application/json
+```
 
 ## Current Status
 
 The project currently supports:
 
-* WhatsApp webhook handling
-* chat persistence in Supabase
-* semantic retrieval with pgvector
-* Groq-powered responses
-* local testing scripts
+- Website chatbot REST API handling
+- Chat persistence in Supabase
+- Semantic retrieval with pgvector
+- Groq-powered responses
+- Internal token protection
+- Rate limiting
+- Local testing scripts
 
 ## Notes
 
-* The bot uses short-term chat memory from recent messages.
-* Retrieval quality depends on chunking and embedding quality.
-* The current architecture is built to be extended with long-term memory, reranking, and hybrid search.
+- The bot uses short-term chat memory from recent messages.
+- Retrieval quality depends on chunking and embedding quality.
+- The current architecture is built to be extended with long-term memory, reranking, and hybrid search.
 
 ## Next Improvements
 
-* Add long-term memory summaries
-* Add reranking for better retrieval quality
-* Add hybrid search (vector + keyword)
-* Add retries and queueing for webhook reliability
-* Add observability and query logging
+- Add long-term memory summaries
+- Add reranking for better retrieval quality
+- Add hybrid search (vector + keyword)
+- Add Redis-backed distributed rate limiting
+- Add retries and queueing for request reliability
+- Add observability and query logging
+- Add frontend chat UI integration examples
 
 ## License
 
