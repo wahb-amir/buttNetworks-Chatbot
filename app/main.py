@@ -14,6 +14,6 @@ app.include_router(
 async def root():
     return {"status": "online", "message": "RAG Bot Server is running"}
 
-@app.post("/health")
+@app.head("/health")
 async def health_check():
     return {"status": "healthy"}
