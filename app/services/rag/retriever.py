@@ -29,11 +29,9 @@ def _normalize_query(query: str) -> str:
 def retrieve_chunks(
     query: str,
     top_k: int = 5,
-    min_similarity: float = 0.65,
+    candidate_k: int = 25,
+    min_similarity: float = 0.40,
 ) -> List[RetrievedChunk]:
-    """
-    Embed the user query and retrieve the most relevant chunks from Supabase.
-    """
     normalized_query = _normalize_query(query)
     query_embedding = embed_text(normalized_query)
 
@@ -51,27 +49,27 @@ def retrieve_chunks(
         "match_knowledge_chunks",
         {
             "query_embedding": query_embedding,
-            "match_count": top_k,
+            "match_count": candidate_k,
             "min_similarity": min_similarity,
         },
     ).execute()
 
     rows = response.data or []
 
-    results: List[RetrievedChunk] = []
-    for row in rows:
-        results.append(
-            RetrievedChunk(
-                id=row["id"],
-                source=row.get("source"),
-                content=row["content"],
-                metadata=row.get("metadata"),
-                similarity=float(row["similarity"]),
-            )
+    # Optional: rerank here before trimming to top_k
+    rows = sorted(rows, key=lambda r: float(r["similarity"]), reverse=True)[:top_k]
+
+    return [
+        RetrievedChunk(
+            id=row["id"],
+            source=row.get("source"),
+            content=row["content"],
+            metadata=row.get("metadata"),
+            similarity=float(row["similarity"]),
         )
-
-    return results
-
+        for row in rows
+    ]
+    
 
 def print_retrieval(query: str, top_k: int = 5, min_similarity: float = 0.65) -> None:
     """
@@ -103,4 +101,4 @@ def print_retrieval(query: str, top_k: int = 5, min_similarity: float = 0.65) ->
 
 
 if __name__ == "__main__":
-    print_retrieval("AI recycling app with leaderboard", match_count=5, min_similarity=0.65)
+    print_retrieval("AI recycling app with leaderboard", top_k=5, min_similarity=0.65)

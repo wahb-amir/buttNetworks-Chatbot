@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from typing import List
-
+from typing import Any, Dict, List
 from app.services.rag.retriever import RetrievedChunk, retrieve_chunks
 from app.services.llm.groq_client import generate_response  # we'll define this next
 
@@ -35,9 +34,10 @@ def answer_with_rag(query: str, chat_history: List[Dict[str, Any]] = None):
 
     # 4. Final prompt
     prompt = f"""
-You are a helpful AI assistant for a WhatsApp chatbot.
+You are a helpful AI assistant for a website chatbot.
 
-Use the CONTEXT below to answer the user.
+Use only the CONTEXT below.
+If the answer is not in the context, say you do not know.
 
 CONTEXT:
 {context}
