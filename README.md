@@ -1,21 +1,67 @@
 # Website Chatbot RAG System
 
-A website chatbot built with **FastAPI**, **Supabase pgvector**, **Groq**, and **local embeddings**. The system stores conversation history, retrieves relevant knowledge chunks with vector search, and generates grounded replies with an LLM.
+A production-oriented Retrieval-Augmented Generation (RAG) chatbot built with **FastAPI**, **Supabase pgvector**, **Groq**, and **local embeddings**.
 
-## Features
+The system stores conversation history, retrieves relevant knowledge chunks using semantic search, and generates grounded responses using a large language model. It is designed for website integration, internal support assistants, documentation chatbots, and business knowledge bases.
+
+---
+
+# Features
 
 - REST API chatbot endpoint for website integration
 - FastAPI backend
-- Internal token authentication for server-to-server calls
+- Internal token authentication for server-to-server communication
 - Rate limiting for abuse protection
-- Groq LLM response generation
-- Supabase-backed chat memory
-- pgvector retrieval for knowledge chunks
-- Local embeddings for chunking and query search
-- Retrieval test scripts for debugging and validation
-- Docker-ready project structure
+- Groq-powered response generation
+- Supabase-backed conversation memory
+- pgvector semantic retrieval
+- Local embedding generation
+- Markdown-aware document ingestion
+- Heading-aware section tracking
+- Context-preserving chunk overlap
+- Duplicate chunk detection and filtering
+- Retrieval debugging utilities
+- Modular RAG architecture
+- Docker-friendly project structure
 
-## Project Structure
+---
+
+# Architecture Overview
+
+```text
+User
+ │
+ ▼
+Website Frontend
+ │
+ ▼
+FastAPI Chat Endpoint
+ │
+ ├── Authentication
+ ├── Rate Limiting
+ └── Session Handling
+ │
+ ▼
+RAG Pipeline
+ │
+ ├── Query Embedding
+ ├── Vector Retrieval (pgvector)
+ ├── Context Construction
+ └── Prompt Assembly
+ │
+ ▼
+Groq LLM
+ │
+ ▼
+Grounded Response
+ │
+ ▼
+Frontend
+```
+
+---
+
+# Project Structure
 
 ```text
 app
@@ -48,77 +94,251 @@ scripts
 └── test.py
 ```
 
-## How It Works
+---
 
-1. The website sends a JSON message to the chatbot REST API.
-2. The request is authenticated with an internal token.
-3. The user message is saved in chat memory.
-4. The user query is embedded with the local embedding model.
-5. Supabase pgvector retrieves the most relevant knowledge chunks.
-6. The retrieved chunks and recent chat history are passed to Groq.
-7. The model generates a grounded reply.
-8. The reply is returned as JSON to the frontend.
+# How It Works
 
-## Main Components
+1. The frontend sends a message to the chatbot API.
+2. The request is authenticated using an internal API token.
+3. The user's message is stored in chat history.
+4. The query is normalized and embedded using a local embedding model.
+5. Supabase pgvector performs semantic similarity search.
+6. The most relevant knowledge chunks are returned.
+7. Recent conversation history is loaded.
+8. Context and history are combined into a prompt.
+9. Groq generates a grounded response.
+10. The response is returned to the frontend.
 
-### `app/api/v1/chat.py`
+---
 
-Handles incoming website chatbot requests, stores user messages, loads recent conversation history, runs the RAG pipeline, and returns the response as JSON.
+# Main Components
 
-### `app/repositories/chat_repository.py`
+## `app/api/v1/chat.py`
 
-Reads and writes conversation messages and conversation records.
+Responsible for:
 
-### `app/repositories/knowledge_repository.py`
+- Receiving chatbot requests
+- Validating authentication
+- Loading conversation history
+- Running the RAG pipeline
+- Returning responses as JSON
 
-Inserts knowledge chunks and performs vector search operations.
+---
 
-### `app/services/rag/retriever.py`
+## `app/repositories/chat_repository.py`
 
-Embeds the query and fetches the most relevant chunks from Supabase.
+Responsible for:
 
-### `app/services/rag/pipeline.py`
+- Creating conversations
+- Storing chat messages
+- Loading previous messages
+- Managing chat persistence
 
-Builds the prompt context and coordinates retrieval + generation.
+---
 
-### `app/services/llm/groq_client.py`
+## `app/repositories/knowledge_repository.py`
 
-Wraps the Groq API call used for answer generation.
+Responsible for:
 
-### `app/services/embeddings/local_embeddings.py`
+- Knowledge chunk storage
+- Vector search operations
+- Retrieval-related database access
 
-Creates local embeddings using the configured embedding model.
+---
 
-### `scripts/ingest_docs.py`
+## `app/services/rag/retriever.py`
 
-Chunks and ingests markdown content into Supabase.
+Responsible for:
 
-### `scripts/retival_test.py`
+- Query normalization
+- Query embedding generation
+- Supabase vector search
+- Similarity validation
+- Retrieval debugging utilities
 
-Tests retrieval quality without sending a browser request.
+Returned chunks contain:
 
-### `scripts/test.py`
+- Chunk ID
+- Source
+- Content
+- Metadata
+- Similarity score
 
-Simulates a chatbot API request locally.
+---
 
-## Setup
+## `app/services/rag/pipeline.py`
 
-### 1. Create and activate a virtual environment
+Responsible for:
+
+- Retrieval orchestration
+- Context formatting
+- Prompt construction
+- Response generation flow
+
+---
+
+## `app/services/llm/groq_client.py`
+
+Responsible for:
+
+- Groq API communication
+- Model invocation
+- Response handling
+
+---
+
+## `app/services/embeddings/local_embeddings.py`
+
+Responsible for:
+
+- Local embedding generation
+- Embedding model abstraction
+
+---
+
+# Retrieval Design
+
+The retrieval layer is based on semantic vector search.
+
+## Retrieval Flow
+
+```text
+User Query
+     │
+     ▼
+Query Normalization
+     │
+     ▼
+Embedding Generation
+     │
+     ▼
+Supabase pgvector Search
+     │
+     ▼
+Top Matching Chunks
+     │
+     ▼
+Context Builder
+     │
+     ▼
+LLM
+```
+
+## Retrieval Features
+
+- Query normalization
+- Similarity threshold filtering
+- Top-K retrieval
+- Metadata-aware results
+- Source tracking
+- Retrieval debugging support
+
+---
+
+# Ingestion Pipeline
+
+The ingestion pipeline converts Markdown documentation into searchable vector chunks.
+
+## Processing Steps
+
+1. Normalize text
+2. Extract Markdown headings
+3. Preserve section hierarchy
+4. Build logical content blocks
+5. Split oversized blocks
+6. Create overlapping chunks
+7. Generate embeddings
+8. Store chunks in Supabase
+
+---
+
+## Markdown-Aware Chunking
+
+Instead of blindly splitting text, the ingestion system:
+
+- Preserves heading context
+- Tracks nested sections
+- Keeps related paragraphs together
+- Minimizes context fragmentation
+
+Example:
+
+```markdown
+# Authentication
+
+## JWT Setup
+
+Explanation...
+
+## OAuth Setup
+
+Explanation...
+```
+
+Stored metadata:
+
+```json
+{
+  "section": "Authentication / JWT Setup"
+}
+```
+
+---
+
+## Chunk Metadata
+
+Each chunk stores:
+
+```json
+{
+  "chunk_index": 0,
+  "source_file": "docs/auth.md",
+  "source_name": "auth.md",
+  "section": "Authentication / JWT Setup",
+  "char_length": 820,
+  "content_hash": "...",
+  "embedding_model": "...",
+  "embedding_dim": 384
+}
+```
+
+---
+
+## Duplicate Detection
+
+The ingestion pipeline computes a content hash for every chunk.
+
+Benefits:
+
+- Prevents duplicate storage
+- Saves vector space
+- Improves retrieval quality
+- Reduces ingestion mistakes
+
+---
+
+# Setup
+
+## 1. Create Virtual Environment
 
 ```bash
 python3 -m venv venv
 source venv/bin/activate
 ```
 
-### 2. Install dependencies
+---
+
+## 2. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Configure environment variables
+---
 
-Create a `.env` file in the project root and add:
+## 3. Configure Environment Variables
+
+Create a `.env` file:
 
 ```env
 APP_ENV=dev
@@ -138,57 +358,92 @@ RATE_LIMIT_WINDOW_SECONDS=60
 RATE_LIMIT_MAX_REQUESTS=30
 ```
 
-## Database Setup
+---
 
-Run the schema file in Supabase SQL editor:
+# Database Setup
+
+Run:
 
 ```sql
 -- app/db/schema.sql
 ```
 
-The database should include tables for:
+Required tables:
 
-- `conversations`
-- `chat_messages`
-- `knowledge_chunks`
+- conversations
+- chat_messages
+- knowledge_chunks
 
-## Ingest Knowledge Docs
+---
 
-To ingest the markdown knowledge file into Supabase:
+# Ingest Knowledge
+
+Default:
 
 ```bash
 python3 scripts/ingest_docs.py
 ```
 
-## Test Retrieval
+Custom:
 
-To test the retrieval layer without the frontend:
+```bash
+python3 scripts/ingest_docs.py \
+  --file docs/product.md \
+  --source product-docs \
+  --max-chars 1000 \
+  --overlap-chars 150
+```
+
+---
+
+# Test Retrieval
 
 ```bash
 python3 -m scripts.retival_test
 ```
 
-## Simulate a Chatbot Request Locally
+The output includes:
+
+- chunk id
+- source
+- similarity score
+- chunk index
+- content preview
+
+---
+
+# Simulate a Chat Request
 
 ```bash
 python3 scripts/test.py
 ```
 
-## Run the App
+---
+
+# Run the API
 
 ```bash
 uvicorn app.main:app --reload
 ```
 
-## API Endpoint
+---
 
-Use the chatbot endpoint from your frontend or backend:
+# API Endpoint
 
-```text
+## Request
+
+```http
 POST /api/v1/chat
 ```
 
-Example JSON body:
+Headers:
+
+```http
+Authorization: Bearer YOUR_INTERNAL_API_TOKEN
+Content-Type: application/json
+```
+
+Body:
 
 ```json
 {
@@ -197,41 +452,70 @@ Example JSON body:
 }
 ```
 
-Example headers:
+---
 
-```http
-Authorization: Bearer YOUR_INTERNAL_API_TOKEN
-Content-Type: application/json
+## Response
+
+Example:
+
+```json
+{
+  "response": "Yes, I can help you with that."
+}
 ```
 
-## Current Status
+---
 
-The project currently supports:
+# Current Status
 
-- Website chatbot REST API handling
-- Chat persistence in Supabase
-- Semantic retrieval with pgvector
-- Groq-powered responses
-- Internal token protection
+Implemented:
+
+- FastAPI chatbot API
+- Internal token authentication
 - Rate limiting
-- Local testing scripts
+- Supabase chat memory
+- Semantic retrieval
+- Groq integration
+- Markdown-aware chunking
+- Section metadata tracking
+- Chunk overlap support
+- Duplicate chunk filtering
+- Retrieval testing utilities
 
-## Notes
+---
 
-- The bot uses short-term chat memory from recent messages.
-- Retrieval quality depends on chunking and embedding quality.
-- The current architecture is built to be extended with long-term memory, reranking, and hybrid search.
+# Future Improvements
 
-## Next Improvements
+## Retrieval
 
-- Add long-term memory summaries
-- Add reranking for better retrieval quality
-- Add hybrid search (vector + keyword)
-- Add Redis-backed distributed rate limiting
-- Add retries and queueing for request reliability
-- Add observability and query logging
-- Add frontend chat UI integration examples
+- Hybrid search (vector + keyword)
+- Reranking
+- Parent-child retrieval
+- Multi-query retrieval
+- Query rewriting
 
-## License
+## Memory
+
+- Long-term memory summaries
+- User preference memory
+- Session summarization
+
+## Infrastructure
+
+- Redis-backed distributed rate limiting
+- Background job processing
+- Retry queues
+- Monitoring and observability
+
+## Evaluation
+
+- Retrieval evaluation suite
+- Grounding checks
+- Hallucination detection
+- Query analytics
+
+---
+
+# License
 
 No license has been added yet.
